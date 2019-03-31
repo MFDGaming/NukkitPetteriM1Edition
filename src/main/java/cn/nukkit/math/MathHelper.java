@@ -11,6 +11,9 @@ public class MathHelper {
             a[i] = (float) Math.sin(i * 3.141592653589793D * 2.0D / 65536.0D);
     }
 
+    private static final int BIG_ENOUGH_INT = 30_000_000;
+    private static final double BIG_ENOUGH_FLOOR = BIG_ENOUGH_INT;
+
     private MathHelper() {
     }
 
@@ -107,5 +110,13 @@ public class MathHelper {
     public static int log2nlz(int bits) {
         if (bits == 0) return 0;
         return 31 - Integer.numberOfLeadingZeros(bits);
+    }
+
+    public static int fastCeil(float val) {
+        return BIG_ENOUGH_INT - (int) (BIG_ENOUGH_FLOOR - val);
+    }
+
+    public static int fastFloor(float val) {
+        return (int) (val + BIG_ENOUGH_FLOOR) - BIG_ENOUGH_INT;
     }
 }
