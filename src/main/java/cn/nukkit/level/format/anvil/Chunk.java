@@ -345,7 +345,6 @@ public class Chunk extends BaseChunk {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
     }
 
     @Override
