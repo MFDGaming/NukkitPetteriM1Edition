@@ -65,7 +65,7 @@ public class ItemTrident extends ItemTool {
         double p = (double) diff / 20;
 
         double f = Math.min((p * p + p * 2) / 3, 1) * 2.5;
-        EntityThrownTrident trident = new EntityThrownTrident(player.chunk, nbt, player, f == 2);
+        EntityThrownTrident trident = new EntityThrownTrident(player.chunk, nbt, player);
         trident.setItem(this);
 
         EntityShootBowEvent entityShootBowEvent = new EntityShootBowEvent(player, this, trident, f);
@@ -90,7 +90,7 @@ public class ItemTrident extends ItemTool {
                     if (!player.isCreative()) {
                         new NukkitRunnable() {
                             public void run() {
-                                player.getInventory().removeItem(Item.get(Item.TRIDENT, meta, 1));
+                                player.getInventory().decreaseCount(player.getInventory().getHeldItemIndex());
                             }
                         }.runTaskLater(null, 1);
                     }

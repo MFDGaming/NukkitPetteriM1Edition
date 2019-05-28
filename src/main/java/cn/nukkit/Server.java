@@ -70,8 +70,6 @@ import cn.nukkit.scheduler.ServerScheduler;
 import cn.nukkit.utils.*;
 import co.aikar.timings.Timings;
 import com.google.common.base.Preconditions;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.extern.log4j.Log4j2;
 
@@ -173,8 +171,6 @@ public class Server {
     private final String dataPath;
     private final String pluginPath;
 
-    private final Set<UUID> uniquePlayers = new HashSet<>();
-
     private QueryHandler queryHandler;
 
     private QueryRegenerateEvent queryRegenerateEvent;
@@ -271,7 +267,6 @@ public class Server {
                 put("xbox-auth", true);
                 put("bed-spawnpoints", true);
                 put("explosion-break-blocks", true);
-                put("weather", true);
                 put("stop-in-game", false);
                 put("op-in-game", true);
                 put("xp-bottles-on-creative", true);
@@ -322,6 +317,8 @@ public class Server {
                 put("worlds-entity-spawning-disabled", "");
                 put("block-listener", true);
                 put("allow-flight", false);
+                put("timeout-milliseconds", 15000);
+                put("multiversion-min-protocol", 0);
             }
         });
 
@@ -483,7 +480,6 @@ public class Server {
         // Load levels
         if (this.getPropertyBoolean("load-all-worlds", true)) {
             String dir2 = null;
-            Level level = this.getDefaultLevel();
             File directory = new File("");
             try {
                 String f = directory.getCanonicalPath();
@@ -491,8 +487,7 @@ public class Server {
             } catch (Exception localException) {}
             File var11 = new File(dir2);
             File[] fa = var11.listFiles();
-            for (int i = 0; i < fa.length; i++) {
-                File fs = fa[i];
+            for (File fs : fa) {
                 if ((fs.isDirectory()) && (!this.isLevelLoaded(fs.getName()))) {
                     this.loadLevel(fs.getName());
                 }
@@ -524,11 +519,9 @@ public class Server {
                 URL url = new URL("https://api.github.com/repos/PetteriM1/NukkitPetteriM1Edition/commits/master");
                 URLConnection request = url.openConnection();
                 request.connect();
-                JsonElement root = new JsonParser().parse(new InputStreamReader((InputStream) request.getContent()));
-                JsonObject rootobj = root.getAsJsonObject();
-                String latest = "git-" + rootobj.get("sha").getAsString().substring(0, 7);
+                String latest = "git-" + new JsonParser().parse(new InputStreamReader((InputStream) request.getContent())).getAsJsonObject().get("sha").getAsString().substring(0, 7);
 
-                if (!this.getNukkitVersion().equals(latest)) {
+                if (!this.getNukkitVersion().equals(latest) && !this.getNukkitVersion().equals("git-null")) {
                     this.getLogger().notice("[Update] \u00A7eThere is a newer build of Nukkit PetteriM1 Edition available! Current: " + this.getNukkitVersion() + " Latest: " + latest);
                 }
 
@@ -615,15 +608,30 @@ public class Server {
     }
 
     public static void broadcastPacket(Player[] players, DataPacket packet) {
-        packet.encode();
-        packet.isEncoded = true;
+        boolean mvplayers = false;
+        //packet.encode();
+        //packet.isEncoded = true;
 
-        if (packet.pid() == ProtocolInfo.BATCH_PACKET) {
+        //if (packet.pid() == ProtocolInfo.BATCH_PACKET) {
+            for (Player player : players) {
+                //player.dataPacket(packet); // HACK: Force multiversion
+                if (player.protocol <= 274) { // 1.5 or lower
+                    mvplayers = true;
+                    break;
+                }
+            }
+        //} else {
+        //    getInstance().batchPackets(players, new DataPacket[]{packet}, true);
+        //}
+
+        if (!mvplayers && packet.pid() != ProtocolInfo.BATCH_PACKET) { // We can send same packet for everyone and save some resources
+            packet.encode();
+            packet.isEncoded = true;
+            getInstance().batchPackets(players, new DataPacket[]{packet}, false); // forceSync should be true?
+        } else { // Need to force multiversion
             for (Player player : players) {
                 player.dataPacket(packet);
             }
-        } else {
-            getInstance().batchPackets(players, new DataPacket[]{packet}, true);
         }
 
         if (packet.encapsulatedPacket != null) {
@@ -913,10 +921,6 @@ public class Server {
         this.sendFullPlayerListData(player);
     }
 
-    public void onPlayerLogin(Player player) {
-        this.uniquePlayers.add(player.getUniqueId());
-    }
-
     public void addPlayer(String identifier, Player player) {
         this.players.put(identifier, player);
         this.identifier.put(player.rawHashCode(), identifier);
@@ -997,10 +1001,10 @@ public class Server {
     }
 
     public void sendRecipeList(Player player) {
-        player.dataPacket(CraftingManager.packet);
+        player.dataPacket(player.protocol >= 354 ? CraftingManager.packet : CraftingManager.packetPre354);
     }
 
-    private void checkTickUpdates(int currentTick, long tickTime) {
+    private void checkTickUpdates(int currentTick) {
         for (Player p : new ArrayList<>(this.players.values())) {
             if (this.alwaysTickPlayers) {
                 p.onUpdate(currentTick);
@@ -1064,7 +1068,7 @@ public class Server {
         }
     }
 
-    private boolean tick() {
+    private void tick() {
         long tickTime = System.currentTimeMillis();
 
         long time = tickTime - this.nextTick;
@@ -1078,7 +1082,7 @@ public class Server {
 
         long tickTimeNano = System.nanoTime();
         if ((tickTime - this.nextTick) < -25) {
-            return false;
+            return;
         }
 
         Timings.fullServerTickTimer.startTiming();
@@ -1097,7 +1101,7 @@ public class Server {
         this.scheduler.mainThreadHeartbeat(this.tickCounter);
         Timings.schedulerTimer.stopTiming();
 
-        this.checkTickUpdates(this.tickCounter, tickTime);
+        this.checkTickUpdates(this.tickCounter);
 
         for (Player player : new ArrayList<>(this.players.values())) {
             player.checkNetwork();
@@ -1160,24 +1164,21 @@ public class Server {
         } else {
             this.nextTick += 50;
         }
-
-        return true;
     }
 
     public long getNextTick() {
         return nextTick;
     }
 
-    public void titleTick() {
+    private void titleTick() {
         if (!Nukkit.TITLE) return;
 
         Runtime runtime = Runtime.getRuntime();
         double used = NukkitMath.round((double) (runtime.totalMemory() - runtime.freeMemory()) / 1024 / 1024, 2);
         double max = NukkitMath.round(((double) runtime.maxMemory()) / 1024 / 1024, 2);
-        String usage = Math.round(used / max * 100) + "%";
         String title = (char) 0x1b + "]0;Nukkit Server " +
                 " | Online " + this.players.size() + "/" + this.getMaxPlayers() +
-                " | Memory " + usage +
+                " | Memory " + Math.round(used / max * 100) + "%" +
                 " | U " + NukkitMath.round((this.network.getUpload() / 1024 * 1000), 2) +
                 " D " + NukkitMath.round((this.network.getDownload() / 1024 * 1000), 2) + " kB/s" +
                 " | TPS " + this.getTicksPerSecond() +
@@ -1937,7 +1938,6 @@ public class Server {
         Entity.registerEntity("FallingSand", EntityFallingBlock.class);
         Entity.registerEntity("PrimedTnt", EntityPrimedTNT.class);
         Entity.registerEntity("Firework", EntityFirework.class);
-        Entity.registerEntity("FishingHook", EntityFishingHook.class);
         //Projectiles
         Entity.registerEntity("Arrow", EntityArrow.class);
         Entity.registerEntity("Snowball", EntitySnowball.class);
@@ -1955,6 +1955,7 @@ public class Server {
         Entity.registerEntity("LlamaSplit", EntityLlamaSpit.class);
         Entity.registerEntity("EvocationFangs", EntityEvocationFangs.class);
         Entity.registerEntity("EnderCharge", EntityEnderCharge.class);
+        Entity.registerEntity("FishingHook", EntityFishingHook.class);
         //Monsters
         Entity.registerEntity("Blaze", EntityBlaze.class);
         Entity.registerEntity("Creeper", EntityCreeper.class);
@@ -1970,6 +1971,7 @@ public class Server {
         Entity.registerEntity("Husk", EntityHusk.class);
         Entity.registerEntity("MagmaCube", EntityMagmaCube.class);
         Entity.registerEntity("Phantom", EntityPhantom.class);
+        Entity.registerEntity("Ravager", EntityRavager.class);
         Entity.registerEntity("Shulker", EntityShulker.class);
         Entity.registerEntity("Silverfish", EntitySilverfish.class);
         Entity.registerEntity("Skeleton", EntitySkeleton.class);
@@ -1985,6 +1987,7 @@ public class Server {
         Entity.registerEntity("ZombiePigman", EntityZombiePigman.class);
         Entity.registerEntity("ZombieVillager", EntityZombieVillager.class);
         Entity.registerEntity("Zombie", EntityZombie.class);
+        Entity.registerEntity("Pillager", EntityPillager.class);
         //Passive
         Entity.registerEntity("Bat", EntityBat.class);
         Entity.registerEntity("Cat", EntityCat.class);
@@ -2014,6 +2017,7 @@ public class Server {
         Entity.registerEntity("Ocelot", EntityOcelot.class);
         Entity.registerEntity("Villager", EntityVillager.class);
         Entity.registerEntity("ZombieHorse", EntityZombieHorse.class);
+        Entity.registerEntity("WanderingTrader", EntityWanderingTrader.class);
         //Vehicles
         Entity.registerEntity("MinecartRideable", EntityMinecartEmpty.class);
         Entity.registerEntity("MinecartChest", EntityMinecartChest.class);

@@ -135,7 +135,7 @@ public class Network {
     public void processBatch(BatchPacket packet, Player player) {
         byte[] data;
         try {
-            data = Zlib.inflate(packet.payload, 64 * 1024 * 1024);
+            data = Zlib.inflate(packet.payload, 2 * 1024 * 1024);
         } catch (Exception e) {
             return;
         }
@@ -144,15 +144,28 @@ public class Network {
         BinaryStream stream = new BinaryStream(data);
         try {
             List<DataPacket> packets = new ArrayList<>();
+            int count = 0;
             while (stream.offset < len) {
+                count++;
+                if (count >= 1000) {
+                    player.close("", "Illegal Batch Packet");
+                    return;
+                }
                 byte[] buf = stream.getByteArray();
 
                 DataPacket pk;
 
                 if ((pk = this.getPacket(buf[0])) != null) {
-                    pk.setBuffer(buf, 1);
+                    pk.setBuffer(buf, player.protocol <= 274 ? 3 : 1);
 
-                    try { pk.decode(); } catch (Exception e) {}
+                    try {
+                        pk.decode();
+                    } catch (Exception e) { // LoginPacket < 1.6
+                        try {
+                            pk.setBuffer(buf, 3);
+                            pk.decode();
+                        } catch (Exception ignore) {}
+                    }
 
                     packets.add(pk);
                 }
@@ -309,5 +322,7 @@ public class Network {
         this.registerPacket(ProtocolInfo.LEVEL_SOUND_EVENT_PACKET, LevelSoundEventPacket.class);
         this.registerPacket(ProtocolInfo.LECTERN_UPDATE_PACKET, LecternUpdatePacket.class);
         this.registerPacket(ProtocolInfo.VIDEO_STREAM_CONNECT_PACKET, VideoStreamConnectPacket.class);
+        this.registerPacket(ProtocolInfo.MAP_CREATE_LOCKED_COPY_PACKET, MapCreateLockedCopyPacket.class);
+        this.registerPacket(ProtocolInfo.ON_SCREEN_TEXTURE_ANIMATION_PACKET, OnScreenTextureAnimationPacket.class);
     }
 }

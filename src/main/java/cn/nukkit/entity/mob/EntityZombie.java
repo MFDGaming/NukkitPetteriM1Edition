@@ -4,17 +4,16 @@ import cn.nukkit.Player;
 import cn.nukkit.Server;
 import cn.nukkit.block.Block;
 import cn.nukkit.entity.Entity;
-import cn.nukkit.entity.mob.EntityWalkingMob;
-import cn.nukkit.utils.EntityUtils;
 import cn.nukkit.event.entity.EntityDamageByEntityEvent;
 import cn.nukkit.event.entity.EntityDamageEvent;
 import cn.nukkit.item.Item;
 import cn.nukkit.item.ItemBlock;
-import cn.nukkit.level.Level;
 import cn.nukkit.level.format.FullChunk;
 import cn.nukkit.nbt.tag.CompoundTag;
 import cn.nukkit.network.protocol.EntityEventPacket;
 import cn.nukkit.network.protocol.MobArmorEquipmentPacket;
+import cn.nukkit.network.protocol.MobEquipmentPacket;
+import cn.nukkit.utils.EntityUtils;
 import co.aikar.timings.Timings;
 
 import java.util.ArrayList;
@@ -24,6 +23,8 @@ import java.util.List;
 public class EntityZombie extends EntityWalkingMob {
 
     public static final int NETWORK_ID = 32;
+
+    public Item tool;
 
     public EntityZombie(FullChunk chunk, CompoundTag nbt) {
         super(chunk, nbt);
@@ -55,6 +56,9 @@ public class EntityZombie extends EntityWalkingMob {
 
         this.setDamage(new int[] { 0, 2, 3, 4 });
         this.setMaxHealth(20);
+
+        this.armor = getRandomArmor();
+        this.setRandomTool();
     }
 
     @Override
@@ -109,14 +113,15 @@ public class EntityZombie extends EntityWalkingMob {
 
     @Override
     public boolean entityBaseTick(int tickDiff) {
-        boolean hasUpdate = false;
+        boolean hasUpdate;
         Timings.entityBaseTickTimer.startTiming();
 
         hasUpdate = super.entityBaseTick(tickDiff);
 
-        int time = this.getLevel().getTime() % Level.TIME_FULL;
-        if (!this.isOnFire() && !this.level.isRaining() && (time < 12567 || time > 23450) && !this.isInsideOfWater() && this.level.canBlockSeeSky(this)) {
-            this.setOnFire(100);
+        if (level.shouldMobBurn(this)) {
+            if (this.armor[0] == null || this.armor[0].getId() == 0) {
+                this.setOnFire(100);
+            }
         }
 
         Timings.entityBaseTickTimer.stopTiming();
@@ -132,8 +137,22 @@ public class EntityZombie extends EntityWalkingMob {
         }
 
         if (this.lastDamageCause instanceof EntityDamageByEntityEvent && !this.isBaby()) {
-            for (int i = 0; i < EntityUtils.rand(0, 3); i++) {
+            for (int i = 0; i < EntityUtils.rand(0, 2); i++) {
                 drops.add(Item.get(Item.ROTTEN_FLESH, 0, 1));
+            }
+
+            if (EntityUtils.rand(1, 3) == 1) {
+                switch (EntityUtils.rand(1, 3)) {
+                    case 1:
+                        drops.add(Item.get(Item.IRON_INGOT, 0, EntityUtils.rand(0, 1)));
+                        break;
+                    case 2:
+                        drops.add(Item.get(Item.CARROT, 0, EntityUtils.rand(0, 1)));
+                        break;
+                    case 3:
+                        drops.add(Item.get(Item.POTATO, 0, EntityUtils.rand(0, 1)));
+                        break;
+                }
             }
         }
 
@@ -142,18 +161,38 @@ public class EntityZombie extends EntityWalkingMob {
 
     @Override
     public int getKillExperience() {
-        return this.isBaby() ? 0 : 5;
+        return this.isBaby() ? 12 : 5;
     }
 
     @Override
     public void spawnTo(Player player) {
         super.spawnTo(player);
 
+        MobArmorEquipmentPacket pk = new MobArmorEquipmentPacket();
+        pk.eid = this.getId();
+
         if (java.time.LocalDate.now().toString().contains("-10-31")) {
-            MobArmorEquipmentPacket pk = new MobArmorEquipmentPacket();
-            pk.eid = this.getId();
             pk.slots[0] = new ItemBlock(Block.get(Block.PUMPKIN));
-            player.dataPacket(pk);
+        } else {
+            pk.slots = this.armor;
+        }
+
+        player.dataPacket(pk);
+
+        if (this.tool != null && EntityUtils.rand(1, 10) == 1) {
+            MobEquipmentPacket pk2 = new MobEquipmentPacket();
+            pk2.eid = this.getId();
+            pk2.hotbarSlot = 0;
+            pk2.item = this.tool;
+            player.dataPacket(pk2);
+        }
+    }
+
+    private void setRandomTool() {
+        if (EntityUtils.rand(1, 3) == 1) {
+            this.tool = Item.get(Item.IRON_SWORD, 0, 1);
+        } else {
+            this.tool = Item.get(Item.IRON_SHOVEL, 0, 1);
         }
     }
 }

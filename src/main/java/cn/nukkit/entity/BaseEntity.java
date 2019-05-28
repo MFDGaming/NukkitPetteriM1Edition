@@ -32,6 +32,8 @@ public abstract class BaseEntity extends EntityCreature implements EntityAgeable
     private boolean movement = true;
     private boolean friendly = false;
 
+    public Item[] armor;
+
     private boolean despawn = Server.getInstance().getPropertyBoolean("entity-despawn-task", true);
     private int despawnTicks = Server.getInstance().getPropertyInt("ticks-per-entity-despawns", 8000);
 
@@ -49,7 +51,7 @@ public abstract class BaseEntity extends EntityCreature implements EntityAgeable
     }
 
     public boolean isMovement() {
-        return this.getServer().getMobAiEnabled() && this.getServer().getOnlinePlayers().size() > 0 ? this.movement : false;
+        return this.getServer().getMobAiEnabled() && this.getServer().getOnlinePlayers().size() > 0 && this.movement;
     }
 
     public boolean isKnockback() {
@@ -97,8 +99,8 @@ public abstract class BaseEntity extends EntityCreature implements EntityAgeable
 
     @Override
     public void setBaby(boolean baby) {
-        this.baby = true;
-        this.setDataFlag(DATA_FLAGS, DATA_FLAG_BABY, true);
+        this.baby = baby;
+        this.setDataFlag(DATA_FLAGS, DATA_FLAG_BABY, baby);
         this.setScale((float) 0.5);
     }
 
@@ -183,6 +185,10 @@ public abstract class BaseEntity extends EntityCreature implements EntityAgeable
             return false;
         }
 
+        if (source instanceof EntityDamageByEntityEvent) {
+            ((EntityDamageByEntityEvent) source).setKnockBack(0.25f);
+        }
+
         super.attack(source);
 
         this.target = null;
@@ -237,7 +243,7 @@ public abstract class BaseEntity extends EntityCreature implements EntityAgeable
             if (item.hasCustomName()) {
                 this.setNameTag(item.getCustomName());
                 this.setNameTagVisible(true);
-                player.getInventory().removeItem(item);
+                player.getInventory().decreaseCount(player.getInventory().getHeldItemIndex());
                 return true;
             }
         }
@@ -260,5 +266,141 @@ public abstract class BaseEntity extends EntityCreature implements EntityAgeable
 
     public boolean isInLove() {
         return inLoveTicks > 0;
+    }
+
+    public Item[] getRandomArmor() {
+        Item[] slots = new Item[4];
+        Item helmet = new Item(0, 0, 0);
+        Item chestplate = new Item(0, 0, 0);
+        Item leggings = new Item(0, 0, 0);
+        Item boots = new Item(0, 0, 0);
+
+        switch (EntityUtils.rand(1, 5)) {
+            case 1:
+                if (EntityUtils.rand(1, 100) < 39) {
+                    helmet = Item.get(Item.LEATHER_HELMET, 0, EntityUtils.rand(0, 1));
+                }
+                break;
+            case 2:
+                if (EntityUtils.rand(1, 100) < 50) {
+                    helmet = Item.get(Item.GOLD_HELMET, 0, EntityUtils.rand(0, 1));
+                }
+                break;
+            case 3:
+                if (EntityUtils.rand(1, 100) < 14) {
+                    helmet = Item.get(Item.CHAIN_HELMET, 0, EntityUtils.rand(0, 1));
+                }
+                break;
+            case 4:
+                if (EntityUtils.rand(1, 100) < 3) {
+                    helmet = Item.get(Item.IRON_HELMET, 0, EntityUtils.rand(0, 1));
+                }
+                break;
+            case 5:
+                if (EntityUtils.rand(1, 100) == 100) {
+                    helmet = Item.get(Item.DIAMOND_HELMET, 0, EntityUtils.rand(0, 1));
+                }
+                break;
+        }
+
+        slots[0] = helmet;
+
+        if (EntityUtils.rand(1, 4) != 1) {
+            switch (EntityUtils.rand(1, 5)) {
+                case 1:
+                    if (EntityUtils.rand(1, 100) < 39) {
+                        chestplate = Item.get(Item.LEATHER_CHESTPLATE, 0, EntityUtils.rand(0, 1));
+                    }
+                    break;
+                case 2:
+                    if (EntityUtils.rand(1, 100) < 50) {
+                        chestplate = Item.get(Item.GOLD_CHESTPLATE, 0, EntityUtils.rand(0, 1));
+                    }
+                    break;
+                case 3:
+                    if (EntityUtils.rand(1, 100) < 14) {
+                        chestplate = Item.get(Item.CHAIN_CHESTPLATE, 0, EntityUtils.rand(0, 1));
+                    }
+                    break;
+                case 4:
+                    if (EntityUtils.rand(1, 100) < 3) {
+                        chestplate = Item.get(Item.IRON_CHESTPLATE, 0, EntityUtils.rand(0, 1));
+                    }
+                    break;
+                case 5:
+                    if (EntityUtils.rand(1, 100) == 100) {
+                        chestplate = Item.get(Item.DIAMOND_CHESTPLATE, 0, EntityUtils.rand(0, 1));
+                    }
+                    break;
+            }
+        }
+
+        slots[1] = chestplate;
+
+        if (EntityUtils.rand(1, 2) == 2) {
+            switch (EntityUtils.rand(1, 5)) {
+                case 1:
+                    if (EntityUtils.rand(1, 100) < 39) {
+                        leggings = Item.get(Item.LEATHER_LEGGINGS, 0, EntityUtils.rand(0, 1));
+                    }
+                    break;
+                case 2:
+                    if (EntityUtils.rand(1, 100) < 50) {
+                        leggings = Item.get(Item.GOLD_LEGGINGS, 0, EntityUtils.rand(0, 1));
+                    }
+                    break;
+                case 3:
+                    if (EntityUtils.rand(1, 100) < 14) {
+                        leggings = Item.get(Item.CHAIN_LEGGINGS, 0, EntityUtils.rand(0, 1));
+                    }
+                    break;
+                case 4:
+                    if (EntityUtils.rand(1, 100) < 3) {
+                        leggings = Item.get(Item.IRON_LEGGINGS, 0, EntityUtils.rand(0, 1));
+                    }
+                    break;
+                case 5:
+                    if (EntityUtils.rand(1, 100) == 100) {
+                        leggings = Item.get(Item.DIAMOND_LEGGINGS, 0, EntityUtils.rand(0, 1));
+                    }
+                    break;
+            }
+        }
+
+        slots[2] = leggings;
+
+        if (EntityUtils.rand(1, 5) < 3) {
+            switch (EntityUtils.rand(1, 5)) {
+                case 1:
+                    if (EntityUtils.rand(1, 100) < 39) {
+                        boots = Item.get(Item.LEATHER_BOOTS, 0, EntityUtils.rand(0, 1));
+                    }
+                    break;
+                case 2:
+                    if (EntityUtils.rand(1, 100) < 50) {
+                        boots = Item.get(Item.GOLD_BOOTS, 0, EntityUtils.rand(0, 1));
+                    }
+                    break;
+                case 3:
+                    if (EntityUtils.rand(1, 100) < 14) {
+                        boots = Item.get(Item.CHAIN_BOOTS, 0, EntityUtils.rand(0, 1));
+                    }
+                    break;
+                case 4:
+                    if (EntityUtils.rand(1, 100) < 3) {
+                        boots = Item.get(Item.IRON_BOOTS, 0, EntityUtils.rand(0, 1));
+                    }
+                    break;
+                case 5:
+                    if (EntityUtils.rand(1, 100) == 100) {
+                        boots = Item.get(Item.DIAMOND_BOOTS, 0, EntityUtils.rand(0, 1));
+                    }
+                    break;
+            }
+        }
+
+        slots[3] = boots;
+
+        return slots;
     }
 }

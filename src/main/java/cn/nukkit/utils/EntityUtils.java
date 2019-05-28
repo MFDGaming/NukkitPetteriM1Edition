@@ -17,7 +17,7 @@ public class EntityUtils {
         if (min == max) {
             return max;
         }
-        return min + random.nextInt(max - min);
+        return random.nextInt(max + 1 - min) + min;
     }
 
     public static double rand(double min, double max) {

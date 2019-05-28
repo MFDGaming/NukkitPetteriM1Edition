@@ -20,17 +20,15 @@ public class PigSpawner extends AbstractEntitySpawner {
     public SpawnResult spawn(Player player, Position pos, Level level) {
         SpawnResult result = SpawnResult.OK;
 
-        final int blockId = level.getBlockIdAt((int) pos.x, (int) pos.y, (int) pos.z);
-
-        if (blockId != Block.GRASS) {
+        if (level.getBlockIdAt((int) pos.x, (int) pos.y, (int) pos.z) != Block.GRASS) {
             result = SpawnResult.WRONG_BLOCK;
-        } else if ((pos.y > 255 || (level.getName().equals("nether") && pos.y > 127)) || pos.y < 1 || blockId == Block.AIR) {
+        } else if (pos.y > 255 || pos.y < 1) {
             result = SpawnResult.POSITION_MISMATCH;
         } else if (level.getName().equals("nether") || level.getName().equals("end")) {
             result = SpawnResult.WRONG_BIOME;
         } else {
             BaseEntity entity = this.spawnTask.createEntity("Pig", pos.add(0, 1, 0));
-            if (EntityUtils.rand(0, 500) > 480) {
+            if (EntityUtils.rand(1, 20) == 1) {
                 entity.setBaby(true);
             }
         }

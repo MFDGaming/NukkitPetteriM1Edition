@@ -21,17 +21,15 @@ public class ZombiePigmanSpawner extends AbstractEntitySpawner {
     public SpawnResult spawn(Player player, Position pos, Level level) {
         SpawnResult result = SpawnResult.OK;
 
-        final int blockId = level.getBlockIdAt((int) pos.x, (int) pos.y, (int) pos.z);
-
         if (!level.getName().equals("nether")) {
             result = SpawnResult.WRONG_BIOME;
-        } else if (blockId != Block.NETHERRACK) {
+        } else if (level.getBlockIdAt((int) pos.x, (int) pos.y, (int) pos.z) != Block.NETHERRACK) {
             result = SpawnResult.WRONG_BLOCK;
-        } else if ((pos.y > 255 || (level.getName().equals("nether") && pos.y > 127)) || pos.y < 1 || blockId == Block.AIR) {
+        } else if (pos.y > 127 || pos.y < 1) {
             result = SpawnResult.POSITION_MISMATCH;
         } else {
             BaseEntity entity = this.spawnTask.createEntity("ZombiePigman", pos.add(0, 1, 0));
-            if (EntityUtils.rand(0, 500) > 480) {
+            if (EntityUtils.rand(1, 20) == 1) {
                 entity.setBaby(true);
             }
         }

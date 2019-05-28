@@ -118,6 +118,11 @@ public class AddEntityPacket extends DataPacket {
             .put(106, "minecraft:ice_bomb")
             .put(EntityPhantom.NETWORK_ID, "minecraft:phantom")
             .put(62, "minecraft:tripod_camera")
+            .put(EntityPillager.NETWORK_ID, "minecraft:pillager")
+            .put(EntityWanderingTrader.NETWORK_ID, "minecraft:wandering_trader")
+            .put(EntityRavager.NETWORK_ID, "minecraft:ravager")
+            .put(115, "minecraft:villager_v2")
+            .put(116, "minecraft:zombie_villager_v2")
             .build();
 
     @Override
@@ -163,9 +168,11 @@ public class AddEntityPacket extends DataPacket {
         this.putVector3f(this.speedX, this.speedY, this.speedZ);
         this.putLFloat(this.pitch);
         this.putLFloat(this.yaw);
-        this.putLFloat(this.headYaw);
+        if (protocol >= 274) {
+            this.putLFloat(this.headYaw);
+        }
         this.putAttributeList(this.attributes);
-        this.put(Binary.writeMetadata(this.metadata));
+        this.put(Binary.writeMetadata(protocol, this.metadata));
         this.putUnsignedVarInt(this.links.length);
         for (EntityLink link : links) {
             putEntityLink(link);

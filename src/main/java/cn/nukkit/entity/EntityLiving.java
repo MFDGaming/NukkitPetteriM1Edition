@@ -24,11 +24,7 @@ import cn.nukkit.potion.Effect;
 import cn.nukkit.utils.BlockIterator;
 import co.aikar.timings.Timings;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.*;
 
 /**
  * @author MagicDroidX
@@ -52,11 +48,7 @@ public abstract class EntityLiving extends Entity implements EntityDamageable {
 
     protected int attackTime = 0;
 
-    protected boolean invisible = false;
-
     protected float movementSpeed = 0.1f;
-
-    public AtomicBoolean inKnockback = new AtomicBoolean();
 
     protected int turtleTicks = 200;
 
@@ -154,14 +146,10 @@ public abstract class EntityLiving extends Entity implements EntityDamageable {
     }
 
     public void knockBack(Entity attacker, double damage, double x, double z) {
-        this.knockBack(attacker, damage, x, z, 0.3);
+        this.knockBack(attacker, damage, x, z, 0.4);
     }
 
     public void knockBack(Entity attacker, double damage, double x, double z, double base) {
-        if (inKnockback.get()) return;
-        inKnockback.set(true);
-        server.getScheduler().scheduleDelayedTask(() -> inKnockback.compareAndSet(true, false), 10);
-
         double f = Math.sqrt(x * x + z * z);
         if (f <= 0) {
             return;
@@ -196,13 +184,12 @@ public abstract class EntityLiving extends Entity implements EntityDamageable {
         EntityDeathEvent ev = new EntityDeathEvent(this, this.getDrops());
         this.server.getPluginManager().callEvent(ev);
 
-        if (this.level.getGameRules().getBoolean(GameRule.DO_ENTITY_DROPS)) {
+        if (this.level.getGameRules().getBoolean(GameRule.DO_MOB_LOOT)) {
             if (ev.getEntity() instanceof BaseEntity) {
                 BaseEntity baseEntity = (BaseEntity) ev.getEntity();
                 if (baseEntity.getLastDamageCause() instanceof EntityDamageByEntityEvent) {
                     Entity damager = ((EntityDamageByEntityEvent) baseEntity.getLastDamageCause()).getDamager();
                     if (damager instanceof Player) {
-                        Player player = (Player) damager;
                         int killExperience = baseEntity.getKillExperience();
                         if (killExperience > 0) {
                             this.getLevel().dropExpOrb(this, killExperience);
@@ -242,8 +229,13 @@ public abstract class EntityLiving extends Entity implements EntityDamageable {
             }
         }
 
+        // HACK!
         if (this instanceof Player && ((Player) this).protocol <= 282) {
-            this.setDataFlag(DATA_FLAGS, 34, isBreathing);
+            if (((Player) this).protocol <= 201) {
+                this.setDataFlag(DATA_FLAGS, 33, isBreathing);
+            } else {
+                this.setDataFlag(DATA_FLAGS, 34, isBreathing);
+            }
         } else {
             this.setDataFlag(DATA_FLAGS, DATA_FLAG_BREATHING, isBreathing);
         }
@@ -271,7 +263,9 @@ public abstract class EntityLiving extends Entity implements EntityDamageable {
 
                         if (airTicks <= -20) {
                             airTicks = 0;
-                            this.attack(new EntityDamageEvent(this, DamageCause.DROWNING, 2));
+                            if (!(this instanceof Player) || level.getGameRules().getBoolean(GameRule.DROWNING_DAMAGE)) {
+                                this.attack(new EntityDamageEvent(this, DamageCause.DROWNING, 2));
+                            }
                         }
 
                         this.setAirTicks(airTicks);

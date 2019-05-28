@@ -36,9 +36,7 @@ public class EntityFishingHook extends EntityProjectile {
 	public static final int NETWORK_ID = 77;
 
 	public static final int WAIT_CHANCE = 120;
-	public static final int CHANCE = 40;
 
-	public boolean chance = false;
 	public int waitChance = WAIT_CHANCE * 2;
 	public boolean attracted = false;
 	public int attractTimer = 0;
@@ -206,10 +204,7 @@ public class EntityFishingHook extends EntityProjectile {
 			this.level.addParticle(new WaterParticle(this.fish));
 		}
 		double dist = Math.abs(Math.sqrt(this.x * this.x + this.z * this.z) - Math.sqrt(this.fish.x * this.fish.x + this.fish.z * this.fish.z));
-		if (dist < 0.15) {
-			return true;
-		}
-		return false;
+		return dist < 0.15;
 	}
 
 	public void reelLine() {

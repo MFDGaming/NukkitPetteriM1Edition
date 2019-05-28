@@ -29,10 +29,18 @@ public class CraftingDataPacket extends DataPacket {
     public static final int ENTRY_SHAPELESS_CHEMISTRY = 6;
     public static final int ENTRY_SHAPED_CHEMISTRY = 7;
 
+    public static final String CRAFTING_TAG_CRAFTING_TABLE = "crafting_table";
+    public static final String CRAFTING_TAG_CARTOGRAPHY_TABLE = "cartography_table";
+    public static final String CRAFTING_TAG_STONECUTTER = "stonecutter";
+    public static final String CRAFTING_TAG_FURNACE = "furnace";
+    public static final String CRAFTING_TAG_CAMPFIRE = "campfire";
+    public static final String CRAFTING_TAG_BLAST_FURNACE = "blast_furnace";
+    public static final String CRAFTING_TAG_SMOKER = "smoker";
+
     public List<Object> entries = new ArrayList<>();
     public boolean cleanRecipes;
 
-    private static int writeEntry(Object entry, BinaryStream stream) {
+    private int writeEntry(Object entry, BinaryStream stream) {
         if (entry instanceof ShapelessRecipe) {
             return writeShapelessRecipe(((ShapelessRecipe) entry), stream);
         } else if (entry instanceof ShapedRecipe) {
@@ -45,7 +53,7 @@ public class CraftingDataPacket extends DataPacket {
         return -1;
     }
 
-    private static int writeShapelessRecipe(ShapelessRecipe recipe, BinaryStream stream) {
+    private int writeShapelessRecipe(ShapelessRecipe recipe, BinaryStream stream) {
         stream.putUnsignedVarInt(recipe.getIngredientCount());
 
         for (Item item : recipe.getIngredientList()) {
@@ -56,10 +64,14 @@ public class CraftingDataPacket extends DataPacket {
         stream.putSlot(recipe.getResult());
         stream.putUUID(recipe.getId());
 
+        if (protocol >= 354) {
+            stream.putString(CRAFTING_TAG_CRAFTING_TABLE);
+        }
+
         return CraftingDataPacket.ENTRY_SHAPELESS;
     }
 
-    private static int writeShapedRecipe(ShapedRecipe recipe, BinaryStream stream) {
+    private int writeShapedRecipe(ShapedRecipe recipe, BinaryStream stream) {
         stream.putVarInt(recipe.getWidth());
         stream.putVarInt(recipe.getHeight());
 
@@ -74,25 +86,37 @@ public class CraftingDataPacket extends DataPacket {
 
         stream.putUUID(recipe.getId());
 
+        if (protocol >= 354) {
+            stream.putString(CRAFTING_TAG_CRAFTING_TABLE);
+        }
+
         return CraftingDataPacket.ENTRY_SHAPED;
     }
 
-    private static int writeFurnaceRecipe(FurnaceRecipe recipe, BinaryStream stream) {
+    private int writeFurnaceRecipe(FurnaceRecipe recipe, BinaryStream stream) {
         if (recipe.getInput().hasMeta()) { //Data recipe
             stream.putVarInt(recipe.getInput().getId());
             stream.putVarInt(recipe.getInput().getDamage());
             stream.putSlot(recipe.getResult());
+
+            if (protocol >= 354) {
+                stream.putString(CRAFTING_TAG_FURNACE);
+            }
 
             return CraftingDataPacket.ENTRY_FURNACE_DATA;
         } else {
             stream.putVarInt(recipe.getInput().getId());
             stream.putSlot(recipe.getResult());
 
+            if (protocol >= 354) {
+                stream.putString(CRAFTING_TAG_FURNACE);
+            }
+
             return CraftingDataPacket.ENTRY_FURNACE;
         }
     }
 
-    private static int writeEnchantList(EnchantmentList list, BinaryStream stream) {
+    private int writeEnchantList(EnchantmentList list, BinaryStream stream) {
         stream.putByte((byte) list.getSize());
         for (int i = 0; i < list.getSize(); ++i) {
             EnchantmentEntry entry = list.getSlot(i);

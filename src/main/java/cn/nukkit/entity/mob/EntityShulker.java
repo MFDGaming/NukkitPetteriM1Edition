@@ -1,11 +1,9 @@
 package cn.nukkit.entity.mob;
 
 import cn.nukkit.entity.Entity;
-import cn.nukkit.utils.EntityUtils;
-import cn.nukkit.entity.mob.EntityWalkingMob;
 import cn.nukkit.entity.projectile.EntityShulkerBullet;
-import cn.nukkit.event.entity.EntityDamageEvent;
 import cn.nukkit.event.entity.EntityDamageByEntityEvent;
+import cn.nukkit.event.entity.EntityDamageEvent;
 import cn.nukkit.event.entity.ProjectileLaunchEvent;
 import cn.nukkit.item.Item;
 import cn.nukkit.level.Location;
@@ -14,6 +12,7 @@ import cn.nukkit.level.format.FullChunk;
 import cn.nukkit.level.sound.EndermanTeleportSound;
 import cn.nukkit.math.Vector3;
 import cn.nukkit.nbt.tag.CompoundTag;
+import cn.nukkit.utils.EntityUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,8 +60,8 @@ public class EntityShulker extends EntityWalkingMob {
             this.attackDelay = 0;
 
             double f = 0.5;
-            double yaw = this.yaw + EntityUtils.rand(-220, 220) / 10;
-            double pitch = this.pitch + EntityUtils.rand(-120, 120) / 10;
+        double yaw = this.yaw + EntityUtils.rand(-150.0, 150.0) / 10;
+        double pitch = this.pitch + EntityUtils.rand(-75.0, 75.0) / 10;
             Location pos = new Location(this.x - Math.sin(Math.toRadians(yaw)) * Math.cos(Math.toRadians(pitch)) * 0.5, this.y + this.getHeight() - 0.18,
                     this.z + Math.cos(Math.toRadians(yaw)) * Math.cos(Math.toRadians(pitch)) * 0.5, yaw, pitch, this.level);
             Entity k = EntityUtils.create("ShulkerBullet", pos, this);
@@ -91,7 +90,7 @@ public class EntityShulker extends EntityWalkingMob {
         super.attack(ev);
 
         if (!ev.isCancelled()) {
-            if (EntityUtils.rand(1, 15) == 5) {
+            if (EntityUtils.rand(1, 10) == 1) {
                 this.level.addSound(new EndermanTeleportSound(this));
                 this.move(EntityUtils.rand(-10, 10), 0, EntityUtils.rand(-10, 10));
             }
