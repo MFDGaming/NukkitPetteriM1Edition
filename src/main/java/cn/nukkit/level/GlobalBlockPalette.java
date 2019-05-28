@@ -2,6 +2,7 @@ package cn.nukkit.level;
 
 import cn.nukkit.Server;
 import cn.nukkit.utils.BinaryStream;
+import com.google.common.collect.HashBiMap;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
@@ -10,10 +11,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class GlobalBlockPalette {
 
+    private static final HashBiMap<Integer, String> idToName = HashBiMap.create(); // TODO: Multiversion
     private static final AtomicInteger runtimeIdAllocator282 = new AtomicInteger(0);
     private static final AtomicInteger runtimeIdAllocator291 = new AtomicInteger(0);
     private static final AtomicInteger runtimeIdAllocator313 = new AtomicInteger(0);
@@ -45,7 +48,7 @@ public class GlobalBlockPalette {
             BinaryStream table282 = new BinaryStream();
             table282.putUnsignedVarInt(entries282.size());
             for (TableEntry entry282 : entries282) {
-                registerMapping(282, (entry282.id << 4) | entry282.data);
+                registerMapping(282, (entry282.id << 4) | entry282.data, entry282.name);
                 table282.putString(entry282.name);
                 table282.putLShort(entry282.data);
             }
@@ -57,7 +60,7 @@ public class GlobalBlockPalette {
             BinaryStream table291 = new BinaryStream();
             table291.putUnsignedVarInt(entries291.size());
             for (TableEntry entry291 : entries291) {
-                registerMapping(291, (entry291.id << 4) | entry291.data);
+                registerMapping(291, (entry291.id << 4) | entry291.data, entry291.name);
                 table291.putString(entry291.name);
                 table291.putLShort(entry291.data);
             }
@@ -69,7 +72,7 @@ public class GlobalBlockPalette {
             BinaryStream table313 = new BinaryStream();
             table313.putUnsignedVarInt(entries313.size());
             for (TableEntry entry313 : entries313) {
-                registerMapping(313, (entry313.id << 4) | entry313.data);
+                registerMapping(313, (entry313.id << 4) | entry313.data, entry313.name);
                 table313.putString(entry313.name);
                 table313.putLShort(entry313.data);
             }
@@ -81,7 +84,7 @@ public class GlobalBlockPalette {
             BinaryStream table332 = new BinaryStream();
             table332.putUnsignedVarInt(entries332.size());
             for (TableEntry entry332 : entries332) {
-                registerMapping(332, (entry332.id << 4) | entry332.data);
+                registerMapping(332, (entry332.id << 4) | entry332.data, entry332.name);
                 table332.putString(entry332.name);
                 table332.putLShort(entry332.data);
             }
@@ -93,7 +96,7 @@ public class GlobalBlockPalette {
             BinaryStream table340 = new BinaryStream();
             table340.putUnsignedVarInt(entries340.size());
             for (TableEntry entry340 : entries340) {
-                registerMapping(340, (entry340.id << 4) | entry340.data);
+                registerMapping(340, (entry340.id << 4) | entry340.data, entry340.name);
                 table340.putString(entry340.name);
                 table340.putLShort(entry340.data);
             }
@@ -121,7 +124,7 @@ public class GlobalBlockPalette {
         }
     }
 
-    private static void registerMapping(int protocol, int legacyId) {
+    private static void registerMapping(int protocol, int legacyId, String name) {
         switch (protocol) {
             case 281:
             case 282:
@@ -138,6 +141,7 @@ public class GlobalBlockPalette {
                 break;
             default: // Current protocol
                 legacyToRuntimeId340.put(legacyId, runtimeIdAllocator340.getAndIncrement());
+                idToName.putIfAbsent(legacyId >>> 4, name);
                 break;
         }
     }
@@ -156,6 +160,22 @@ public class GlobalBlockPalette {
             default: // Current protocol
                 return compiledTable340;
         }
+    }
+
+    public static String getName(int id) throws NoSuchElementException {
+        String name = idToName.get(id);
+        if (name == null) {
+            throw new NoSuchElementException("Unmapped block registered id: " + id);
+        }
+        return name;
+    }
+
+    public static int getId(String name) throws NoSuchElementException {
+        Integer id = idToName.inverse().get(name);
+        if (id == null) {
+            throw new NoSuchElementException("Unmapped block registered name: " + name);
+        }
+        return id;
     }
 
     @SuppressWarnings("unused")

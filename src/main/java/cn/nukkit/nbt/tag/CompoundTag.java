@@ -97,9 +97,19 @@ public class CompoundTag extends Tag implements Cloneable {
         return this;
     }
 
+    public CompoundTag putLongArray(String name, long[] value) {
+        tags.put(name, new LongArrayTag(name, value));
+        return this;
+    }
+
     public CompoundTag putList(ListTag<? extends Tag> listTag) {
         tags.put(listTag.getName(), listTag);
         return this;
+    }
+
+    public long[] getLongArray(String name) {
+        if (!tags.containsKey(name)) return new long[0];
+        return ((LongArrayTag) tags.get(name)).data;
     }
 
     public CompoundTag putCompound(String name, CompoundTag value) {
