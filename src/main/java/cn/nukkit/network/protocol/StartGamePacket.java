@@ -99,49 +99,53 @@ public class StartGamePacket extends DataPacket {
         }
         this.putLFloat(this.rainLevel);
         this.putLFloat(this.lightningLevel);
-        if (protocol >= 332) {
-            this.putBoolean(this.hasConfirmedPlatformLockedContent);
-        }
-        this.putBoolean(this.multiplayerGame);
-        this.putBoolean(this.broadcastToLAN);
-        if (protocol >= 332) {
-            this.putVarInt(this.xblBroadcastIntent);
-            this.putVarInt(this.platformBroadcastIntent);
-        } else {
-            this.putBoolean(this.broadcastToXboxLive);
+        if (protocol > 113) {
+            if (protocol >= 332) {
+                this.putBoolean(this.hasConfirmedPlatformLockedContent);
+            }
+            this.putBoolean(this.multiplayerGame);
+            this.putBoolean(this.broadcastToLAN);
+            if (protocol >= 332) {
+                this.putVarInt(this.xblBroadcastIntent);
+                this.putVarInt(this.platformBroadcastIntent);
+            } else {
+                this.putBoolean(this.broadcastToXboxLive);
+            }
         }
         this.putBoolean(this.commandsEnabled);
         this.putBoolean(this.isTexturePacksRequired);
         this.putGameRules(gameRules);
-        this.putBoolean(this.bonusChest);
-        if (protocol > 201) {
-            this.putBoolean(this.hasStartWithMapEnabled);
-        }
-        if (protocol < 332) {
-            this.putBoolean(this.trustPlayers);
-        }
-        this.putVarInt(this.permissionLevel);
-        if (protocol < 332) {
-            this.putVarInt(this.gamePublish);
-        }
-        if (protocol >= 201) {
-            this.putLInt(this.serverChunkTickRange);
-        }
-        if (protocol >= 223 && protocol < 332) {
-            this.putBoolean(this.broadcastToPlatform);
-            this.putVarInt(this.platformBroadcastMode);
-            this.putBoolean(this.xblBroadcastIntentOld);
-        }
-        if (protocol > 224) {
-            this.putBoolean(this.hasLockedBehaviorPack);
-            this.putBoolean(this.hasLockedResourcePack);
-            this.putBoolean(this.isFromLockedWorldTemplate);
-        }
-        if (protocol >= 291) {
-            this.putBoolean(this.isUsingMsaGamertagsOnly);
-            if (protocol >= 313) {
-                this.putBoolean(this.isFromWorldTemplate);
-                this.putBoolean(this.isWorldTemplateOptionLocked);
+        if (protocol > 113) {
+            this.putBoolean(this.bonusChest);
+            if (protocol > 201) {
+                this.putBoolean(this.hasStartWithMapEnabled);
+            }
+            if (protocol < 332) {
+                this.putBoolean(this.trustPlayers);
+            }
+            this.putVarInt(this.permissionLevel);
+            if (protocol < 332) {
+                this.putVarInt(this.gamePublish);
+            }
+            if (protocol >= 201) {
+                this.putLInt(this.serverChunkTickRange);
+            }
+            if (protocol >= 223 && protocol < 332) {
+                this.putBoolean(this.broadcastToPlatform);
+                this.putVarInt(this.platformBroadcastMode);
+                this.putBoolean(this.xblBroadcastIntentOld);
+            }
+            if (protocol > 224) {
+                this.putBoolean(this.hasLockedBehaviorPack);
+                this.putBoolean(this.hasLockedResourcePack);
+                this.putBoolean(this.isFromLockedWorldTemplate);
+            }
+            if (protocol >= 291) {
+                this.putBoolean(this.isUsingMsaGamertagsOnly);
+                if (protocol >= 313) {
+                    this.putBoolean(this.isFromWorldTemplate);
+                    this.putBoolean(this.isWorldTemplateOptionLocked);
+                }
             }
         }
         this.putString(this.levelId);
@@ -149,10 +153,12 @@ public class StartGamePacket extends DataPacket {
         this.putString(this.premiumWorldTemplateId);
         this.putBoolean(this.isTrial);
         this.putLLong(this.currentTick);
-        this.putVarInt(this.enchantmentSeed);
-        if (protocol > 274) {
-            this.put(GlobalBlockPalette.getCompiledTable(this.protocol));
-            this.putString(this.multiplayerCorrelationId);
+        if (protocol > 113) {
+            this.putVarInt(this.enchantmentSeed);
+            if (protocol > 274) {
+                this.put(GlobalBlockPalette.getCompiledTable(this.protocol));
+                this.putString(this.multiplayerCorrelationId);
+            }
         }
     }
 }
