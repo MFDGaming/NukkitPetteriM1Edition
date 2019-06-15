@@ -29,10 +29,11 @@ public class LoginPacket extends DataPacket {
     @Override
     public void decode() {
         this.protocol = this.getInt();
-        if (protocol == 0) {
+        this.getByte(); // TODO: make this multiversion
+        /*if (protocol == 0) {
             setOffset(getOffset() + 2);
             this.protocol = getInt();
-        }
+        }*/
         this.setBuffer(this.getByteArray(), 0);
         decodeChainData();
         decodeSkinData();
