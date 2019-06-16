@@ -2164,7 +2164,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                                 if (e.getLoginResult() == LoginResult.KICK) {
                                     playerInstance.close(e.getKickMessage(), e.getKickMessage());
                                 } else if (playerInstance.shouldLogin) {
-                                    playerInstance.completeLoginSequence();
+                                    //playerInstance.completeLoginSequence();
                                 }
 
                                 for (Consumer<Server> action : e.getScheduledActions()) {
@@ -2177,8 +2177,9 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                     this.server.getScheduler().scheduleAsyncTask(this.preLoginEventTask);
 
                     this.processLogin();
+                    this.completeLoginSequence();
                     break;
-                case ProtocolInfo.RESOURCE_PACK_CLIENT_RESPONSE_PACKET:
+                /*case ProtocolInfo.RESOURCE_PACK_CLIENT_RESPONSE_PACKET:
                     ResourcePackClientResponsePacket responsePacket = (ResourcePackClientResponsePacket) packet;
                     switch (responsePacket.responseStatus) {
                         case ResourcePackClientResponsePacket.STATUS_REFUSED:
@@ -2215,7 +2216,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                             }
                             break;
                     }
-                    break;
+                    break;*/
                 case ProtocolInfo.RESOURCE_PACK_CHUNK_REQUEST_PACKET:
                     ResourcePackChunkRequestPacket requestPacket = (ResourcePackChunkRequestPacket) packet;
                     ResourcePack resourcePack = this.server.getResourcePackManager().getPackById(requestPacket.packId);
