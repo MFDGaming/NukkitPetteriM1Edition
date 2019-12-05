@@ -30,30 +30,28 @@ public class JavaEditionServer {
 
     private cn.nukkit.Server nukkit;
     private String host;
-    private static final int port = 25565;
-    private static final Proxy PROXY = Proxy.NO_PROXY;
-    private static final Proxy AUTH_PROXY = Proxy.NO_PROXY;
-    private static final boolean VERIFY_USERS = false;
+    private static final int port = 25565; //TODO: server.properties setting
 
     public JavaEditionServer(cn.nukkit.Server nukkit) {
         this.nukkit = nukkit;
         this.host = nukkit.getPropertyString("server-ip", "0.0.0.0");
 
-        Server server = new Server(host, port, MinecraftProtocol.class, new TcpSessionFactory(PROXY));
-        server.setGlobalFlag(MinecraftConstants.AUTH_PROXY_KEY, AUTH_PROXY);
-        server.setGlobalFlag(MinecraftConstants.VERIFY_USERS_KEY, VERIFY_USERS);
+        Server server = new Server(host, port, MinecraftProtocol.class, new TcpSessionFactory(Proxy.NO_PROXY));
+        server.setGlobalFlag(MinecraftConstants.AUTH_PROXY_KEY, Proxy.NO_PROXY);
+        server.setGlobalFlag(MinecraftConstants.VERIFY_USERS_KEY, false);
+        server.setGlobalFlag(MinecraftConstants.SERVER_COMPRESSION_THRESHOLD, 100);
+
         server.setGlobalFlag(MinecraftConstants.SERVER_INFO_BUILDER_KEY, (ServerInfoBuilder) session -> new ServerStatusInfo(
                 new VersionInfo(MinecraftConstants.GAME_VERSION, MinecraftConstants.PROTOCOL_VERSION),
                 new PlayerInfo(nukkit.getMaxPlayers(), nukkit.getOnlinePlayers().size(), new GameProfile[0]),
                 new TextMessage(nukkit.getMotd()), null
-        ));
+        )); //TODO: update motd task
 
         server.setGlobalFlag(MinecraftConstants.SERVER_LOGIN_HANDLER_KEY, (ServerLoginHandler) session -> {
             nukkit.getLogger().info("Java Edition Server: [" + session.getHost() + ":" + session.getPort() + "] connected");
-            session.send(new ServerJoinGamePacket(0, nukkit.isHardcore(), GameMode.SURVIVAL, nukkit.getDefaultLevel().getDimension(), nukkit.getMaxPlayers(), WorldType.DEFAULT, nukkit.getViewDistance(), false));
+            session.send(new ServerJoinGamePacket(0, nukkit.isHardcore(), GameMode.SURVIVAL, nukkit.getDefaultLevel().getDimension(), nukkit.getMaxPlayers(), WorldType.DEFAULT, nukkit.getViewDistance(), false)); //TODO: entity id
         });
 
-        server.setGlobalFlag(MinecraftConstants.SERVER_COMPRESSION_THRESHOLD, 100);
         server.addListener(new ServerAdapter() {
             @Override
             public void serverClosed(ServerClosedEvent event) {

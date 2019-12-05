@@ -477,7 +477,7 @@ public class Server {
             }
         }, true);
 
-        this.javaEditionServer = new JavaEditionServer(this);
+        this.javaEditionServer = new JavaEditionServer(this); //TODO: server.properties setting
         this.start();
     }
 
