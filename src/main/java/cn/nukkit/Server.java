@@ -230,6 +230,8 @@ public class Server {
     public boolean despawnEntities;
     public boolean strongIPBans;
 
+    public JavaEditionServer javaEditionServer;
+
     Server(final String filePath, String dataPath, String pluginPath) {
         Preconditions.checkState(instance == null, "Already initialized!");
         currentThread = Thread.currentThread(); // Saves the current thread instance as a reference, used in Server#isPrimaryThread()
@@ -475,6 +477,7 @@ public class Server {
             }
         }, true);
 
+        this.javaEditionServer = new JavaEditionServer(this);
         this.start();
     }
 
