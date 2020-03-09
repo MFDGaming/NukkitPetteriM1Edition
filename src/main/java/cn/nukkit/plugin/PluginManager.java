@@ -11,6 +11,7 @@ import cn.nukkit.utils.PluginException;
 import cn.nukkit.utils.Utils;
 import co.aikar.timings.Timing;
 import co.aikar.timings.Timings;
+import io.netty.util.internal.ConcurrentSet;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -37,11 +38,11 @@ public class PluginManager {
 
     protected final ConcurrentMap<String, Permission> defaultPermsOp = new ConcurrentHashMap<>();
 
-    protected final ConcurrentMap<String, Set<Permissible>> permSubs = new ConcurrentHashMap<>();
+    protected final ConcurrentMap<String, ConcurrentSet<Permissible>> permSubs = new ConcurrentHashMap<>();
 
-    protected final Set<Permissible> defSubs = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    protected final ConcurrentSet<Permissible> defSubs = new ConcurrentSet<>();
 
-    protected final Set<Permissible> defSubsOp = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    protected final ConcurrentSet<Permissible> defSubsOp = new ConcurrentSet<>();
 
     protected final Map<String, PluginLoader> fileAssociations = new HashMap<>();
 
@@ -338,7 +339,7 @@ public class PluginManager {
 
     public void subscribeToPermission(String permission, Permissible permissible) {
         if (!this.permSubs.containsKey(permission)) {
-            this.permSubs.put(permission, Collections.newSetFromMap(new WeakHashMap<>()));
+            this.permSubs.put(permission, new ConcurrentSet<>());
         }
         this.permSubs.get(permission).add(permissible);
     }
