@@ -1935,14 +1935,12 @@ public class Level implements ChunkManager, Metadatable {
                 ev.setCancelled();
             } else if (!player.isOp() && isInSpawnRadius(target)) {
                 ev.setCancelled();
+            } else if (!ev.getInstaBreak() && ev.isFastBreak()) {
+                ev.setCancelled();
             }
 
             this.server.getPluginManager().callEvent(ev);
             if (ev.isCancelled()) {
-                return null;
-            }
-
-            if (!ev.getInstaBreak() && ev.isFastBreak()) {
                 return null;
             }
 
@@ -2068,9 +2066,9 @@ public class Level implements ChunkManager, Metadatable {
             return null;
         }
 
-        if (target.getId() == Item.AIR) {
+        /*if (target.getId() == Item.AIR) {
             return null;
-        }
+        }*/
 
         if (player != null) {
             PlayerInteractEvent ev = new PlayerInteractEvent(player, item, target, face, Action.RIGHT_CLICK_BLOCK);
@@ -2218,7 +2216,7 @@ public class Level implements ChunkManager, Metadatable {
 
                         if (second != null) {
                             block.getLevel().setBlock(block, new BlockAir());
-                            block.getLevel().setBlock(block.add(0, -1, 0), new BlockAir());
+                            block.getLevel().setBlock(block.add(0, 1, 0), new BlockAir()); // block is set to BlockFace.DOWN above
 
                             CreatureSpawnEvent ev = new CreatureSpawnEvent(EntityIronGolem.NETWORK_ID, CreatureSpawnEvent.SpawnReason.BUILD_IRONGOLEM);
                             server.getPluginManager().callEvent(ev);
@@ -2257,7 +2255,7 @@ public class Level implements ChunkManager, Metadatable {
                         block.getLevel().setBlock(first2, new BlockAir());
                         block.getLevel().setBlock(second2, new BlockAir());
                         block.getLevel().setBlock(block, new BlockAir());
-                        block.getLevel().setBlock(block.add(0, -1, 0), new BlockAir());
+                        block.getLevel().setBlock(block.add(0, 1, 0), new BlockAir()); // block is set to BlockFace.DOWN above
 
                         CreatureSpawnEvent ev = new CreatureSpawnEvent(EntityWither.NETWORK_ID, CreatureSpawnEvent.SpawnReason.BUILD_WITHER);
                         server.getPluginManager().callEvent(ev);

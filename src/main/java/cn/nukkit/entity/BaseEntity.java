@@ -52,7 +52,7 @@ public abstract class BaseEntity extends EntityCreature implements EntityAgeable
     }
 
     public boolean isMovement() {
-        return this.getServer().getMobAiEnabled() && !this.getServer().getOnlinePlayers().isEmpty() && this.movement;
+        return this.getServer().getMobAiEnabled() && this.movement;
     }
 
     public boolean isKnockback() {
@@ -198,7 +198,7 @@ public abstract class BaseEntity extends EntityCreature implements EntityAgeable
 
     @Override
     public boolean setMotion(Vector3 motion) {
-        if (this.getServer().getMobAiEnabled() && !this.getServer().getOnlinePlayers().isEmpty()) {
+        if (this.getServer().getMobAiEnabled()) {
             super.setMotion(motion);
         }
         return false;
@@ -206,6 +206,11 @@ public abstract class BaseEntity extends EntityCreature implements EntityAgeable
 
     @Override
     public boolean move(double dx, double dy, double dz) {
+        if (dy < -10 || dy > 10) {
+            this.kill();
+            return false;
+        }
+
         Timings.entityMoveTimer.startTiming();
 
         this.blocksAround = null;
@@ -214,7 +219,8 @@ public abstract class BaseEntity extends EntityCreature implements EntityAgeable
         double movY = dy;
         double movZ = dz * moveMultifier;
 
-        AxisAlignedBB[] list = this.level.getCollisionCubes(this, this.boundingBox.getOffsetBoundingBox(dx, dy, dz));
+        AxisAlignedBB[] list = this.level.getCollisionCubes(this, this.boundingBox.addCoord(dx, dy, dz), false);
+
         for (AxisAlignedBB bb : list) {
             dx = bb.calculateXOffset(this.boundingBox, dx);
         }
