@@ -225,9 +225,9 @@ public class GlobalBlockPalette {
         }
         for (CompoundTag state389 : tag389.getAll()) {
             int runtimeId = runtimeIdAllocator389.getAndIncrement();
-            if (!state389.contains("meta")) continue;
-            for (int val : state389.getIntArray("meta")) {
-                legacyToRuntimeId389.put(state389.getShort("id") << 6 | val, runtimeId);
+            if (!state389.contains("LegacyStates")) continue;
+            for (CompoundTag legacyState : state389.getList("LegacyStates", CompoundTag.class).getAll()) {
+                legacyToRuntimeId389.put(legacyState.getInt("id") << 6 | legacyState.getShort("val"), runtimeId);
             }
             state389.remove("meta"); // No point in sending this since the client doesn't use it
         }
